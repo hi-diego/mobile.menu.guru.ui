@@ -1,0 +1,23 @@
+[
+    {
+        "name": "Toronjo",
+        "description": "El remedio para curar la tristeza. Tejuino con cerveza bien fría.",
+        "price": 120,
+        "category": "Remedios",
+        "image": "toronjo.jpg"
+    },
+    {
+        "name": "Aguachile",
+        "description": "El remedio para curar la tristeza. Tejuino con cerveza bien fría.",
+        "price": 60,
+        "category": "Pa' fuertes",
+        "image": "aguachile.jpg"
+    },
+    {
+        "name": "Chejuino",
+        "description": "El remedio para curar la tristeza. Tejuino con cerveza bien fría.",
+        "price": 60,
+        "category": "Remedios",
+        "image": "chejuino.jpg"
+    }
+]

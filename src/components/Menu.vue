@@ -1,11 +1,11 @@
 <template lang="pug">
 v-container(class="main-menu")
-  .menu-item
-    v-row
-      v-img.index(src="/img/products/plating.gif")
+  .menu-item(v-for="product in products")
+    v-row.limit-h(style="max-height: 65%")
+      v-img.index(height="400", :src="`/img/products/${product.image}`")
     .title.d-flex.flex-column.pa-5
-      p.font-weight-light.invert--text.mb-0 Postres
-      h1.text-h3.font-weight-light.invert--text() Macarroni Spligatto
+      p.font-weight-light.invert--text.mb-0 {{ product.category }}
+      h1.text-h3.font-weight-light.invert--text {{ product.name }}
       .icons.d-flex.my-5
         small.mr-10.d-flex
           v-icon.invert--text mdi-clock-outline
@@ -13,20 +13,76 @@ v-container(class="main-menu")
         small.mr-10.d-flex
           v-icon.invert--text mdi-heart
           span.mx-1.invert--text 30
-  .menu-item
-    v-row
-      v-img.index(src="/img/products/plating.gif")
-    .title.d-flex.flex-column.pa-5
-      p.font-weight-light.invert--text.mb-0 Postres
-      h1.text-h3.font-weight-light.invert--text() Macarroni Spligatto
-      .icons.d-flex.my-5
-        small.mr-10.d-flex
-          v-icon.invert--text mdi-clock-outline
-          span.mx-1.invert--text 30 min
-        small.mr-10.d-flex
-          v-icon.invert--text mdi-heart
-          span.mx-1.invert--text 30
+    v-row.index.py-5
+      .blurry(:style="{ 'background-image': `url(/img/products/${product.image})` }")
+      v-card.index.mx-auto(style="border-radius: 20px; background: transparent")
+        v-card-title {{ product.name  }}
+        v-card-text
+          v-row.mx-0(align='center')
+            v-rating(:value='4.5' color='amber' dense='' half-increments='' readonly='' size='14')
+            .grey--text.ms-4
+              | 4.5 (413)
+          .my-4.text-subtitle-1
+            | {{ product.price }}$ &bull; {{ product.category }}
+          div
+            | {{ product.description }}
+        v-divider.mx-4
+        v-card-actions.flex.justify-end
+          v-btn(color='darken-5' text='' @click="order(product)") Ordenar
+  v-dialog(v-model="billDialog", scrollable, fullscreen, transition="dialog-bottom-transition")
+    template(v-slot:activator="{ on, attrs }")
+      v-btn.upfront.secondary(fab, dark, small, bottom, fixed, left, color="primary", v-bind="attrs", v-on="on")
+        v-icon mdi-menu
+    v-card.bill-card.secondary
+      v-card-title.d-flex.fill-width.justify-space-between
+        | Cuenta
+        v-btn(icon, @click="billDialog = false")
+          v-icon mdi-close
+      v-card-subtitle.pb-0 Mesa 1
+      v-card-text.pa-2.list
+        v-list-item(v-for="(product, i) in orders", :key="i")
+          v-list-item-content
+            v-list-item-title {{ product.name }} ({{ product.category }}) x 1
+            v-list-item-subtitle.d-flex.justify-end.bill-item
+              p {{ subTotal }}$
+      v-card-actions(v-if="bill")
+        v-list-item
+          v-list-item-content
+            v-list-item-title
+              strong TOTAL
+            v-list-item-subtitle.d-flex.justify-end.bill-item
+              strong {{ bill.calculatedTotal }}$
 </template>
+
+<style>
+.upfront {
+  z-index: 999 !important;
+}
+.bill-item {
+  border-bottom: 1px dotted white !important;
+  /*line-height: 0.8 !important;*/
+}
+.bill-item p {
+  margin: 0px !important;
+}
+.order-btn {
+  position: absolute;
+  right: 0px;
+}
+.v-dialog--fullscreen {
+  top: 30% !important;
+  border-radius: 0% !important;
+  border-top-left-radius: 20px !important;
+  border-top-right-radius: 20px !important;
+  height: 70%;
+}
+div.bill-card.secondary {
+  background: linear-gradient(345deg, rgba(161,28,28,1) 0%, rgba(235,19,19,1) 100%) !important;
+}
+div.bill-card.secondary * {
+  color: white !important;
+}
+</style>
 
 <style>
 .index {
@@ -43,14 +99,13 @@ v-container(class="main-menu")
   content: '';
 }
 
-.menu-item::after {
+.blurry {
   height: 100vh;
   width: 100vw;
   content: '';
   position: absolute;
   top: 0%;
   display: flex;
-  background-image: url(/img/products/plating.gif);
   background-repeat: round;
   filter: blur(37px);
 }
@@ -65,52 +120,33 @@ v-container(class="main-menu")
   mix-blend-mode: difference;
 }
 </style>
-
 <script>
+import axios from 'axios'
+const products = require('../assets/products.json')
 export default {
   //
   data: function () {
     return {
+      products,
+      orders: [],
+      billDialog: false,
       publicPath: process.env.BASE_URL
     }
+  },
+  computed: {
+    subTotal () {
+      return this.orders.reduce((a, c, n) => a + c.price, 0)
+    }
+  },
+  methods: {
+    async order (product) {
+      try {
+        await axios.post('orders', product)
+      } catch (err) {
+        console.err(err)
+      }
+      this.orders.push(product)
+    }
   }
-}
-/* eslint-disable */
-function getAverageRGB(imgEl) {
-    var blockSize = 5, // only visit every 5 pixels
-        defaultRGB = {r:0,g:0,b:0}, // for non-supporting envs
-        canvas = document.createElement('canvas'),
-        context = canvas.getContext && canvas.getContext('2d'),
-        data, width, height,
-        i = -4,
-        length,
-        rgb = {r:0,g:0,b:0},
-        count = 0;
-    if (!context) {
-        return defaultRGB;
-    }
-    height = canvas.height = imgEl.naturalHeight || imgEl.offsetHeight || imgEl.height;
-    width = canvas.width = imgEl.naturalWidth || imgEl.offsetWidth || imgEl.width;
-    context.drawImage(imgEl, 0, 0);
-    try {
-        data = context.getImageData(0, 0, width, height);
-    } catch(e) {
-        /* security error, img on diff domain */
-        return defaultRGB;
-    }
-    length = data.data.length;
-    while ( (i += blockSize * 4) < length ) {
-        ++count;
-        rgb.r += data.data[i];
-        rgb.g += data.data[i+1];
-        rgb.b += data.data[i+2];
-    }
-    // ~~ used to floor values
-    rgb.r = ~~(rgb.r/count);
-    rgb.g = ~~(rgb.g/count);
-    rgb.b = ~~(rgb.b/count);
-
-    return rgb;
-
 }
 </script>
